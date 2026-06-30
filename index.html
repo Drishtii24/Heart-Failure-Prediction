@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Failure Prediction Model</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Roboto', sans-serif; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0px); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-fade-in { animation: fadeUp 0.2s ease-out forwards; }
+        .content-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 2.5rem;
+        }
+        input[type="number"], select {
+            transition: all 0.15s ease-in-out;
+        }
+
+        /* --- GAUGE STYLES --- */
+        .gauge-container {
+            width: 200px;
+            height: 100px;
+            position: relative;
+            margin: 10px auto;
+        }
+        .gauge-semi-circle {
+            width: 200px;
+            height: 100px;
+            border-radius: 100px 100px 0 0;
+            background: linear-gradient(to right, #4ade80, #facc15, #f87171);
+            position: relative;
+            overflow: hidden;
+        }
+        .gauge-semi-circle::before {
+            content: '';
+            position: absolute;
+            background: #fff;
+            width: 160px;
+            height: 80px;
+            border-radius: 80px 80px 0 0;
+            bottom: 0;
+            left: 20px;
+        }
+        .gauge-needle {
+            width: 3px;
+            height: 95px;
+            background: #374151;
+            position: absolute;
+            bottom: 0;
+            left: 98.5px;
+            transform-origin: bottom center;
+            transform: rotate(-90deg);
+            transition: transform 0.5s ease-out;
+        }
+        .gauge-center-text {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #374151;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-red-50 to-orange-100 min-h-screen flex items-center justify-center p-4">
+    
+    <div class="container mx-auto p-0 max-w-3xl">
+        
+        <!-- ================================== -->
+        <!--  1. WELCOME SECTION (Visible by default) -->
+        <!-- ================================== -->
+        <div id="welcome-section" class="content-fade-in">
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden text-center p-8 md:p-12">
+                
+                <!-- Header -->
+                <div class="flex items-center justify-center space-x-4">
+                    <span class="text-5xl">🩺</span>
+                    <h1 class="text-4xl font-bold text-gray-800">Heart Health Predictor</h1>
+                </div>
+
+                <!-- What is Heart Failure? -->
+                <div class="mt-8 text-left">
+                    <h2 class="text-2xl font-semibold text-gray-700">What is Heart Failure?</h2>
+                    
+                    <!-- Image removed as requested -->
+                    
+                    <p class="text-base text-gray-600 leading-relaxed mt-4">
+                        Heart failure, sometimes known as congestive heart failure, occurs when the heart muscle doesn't pump blood as well as it should. Certain conditions, such as narrowed arteries in your heart (coronary artery disease) or high blood pressure, gradually leave your heart too weak or stiff to fill and pump efficiently.
+                    </p>
+                    <p class="text-base text-gray-600 leading-relaxed mt-2">
+                        This tool uses a machine learning model to estimate your risk based on common health factors. It is **not** a substitute for professional medical advice.
+                    </p>
+                </div>
+
+                <!-- Call to Action Button -->
+                <button id="start-prediction-btn" class="w-full md:w-3/4 flex justify-center py-3 px-4 mt-10 mx-auto border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:scale-105">
+                    Check Your Risk Now
+                </button>
+            </div>
+        </div>
+
+        <!-- ================================== -->
+        <!--  2. FORM SECTION (Hidden by default) -->
+        <!-- ================================== -->
+        <div id="form-section" class="hidden content-fade-in">
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                
+                <!-- Back Button -->
+                <button id="back-btn" class="flex items-center text-red-600 hover:text-red-800 p-4 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Info
+                </button>
+
+                <!-- Form Header -->
+                <div class="text-center -mt-4 mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800 inline-block pb-2 border-b-2 border-red-200">Enter Patient Data</h2>
+                </div>
+                
+                <!-- Prediction Form -->
+                <form id="prediction-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-8 md:p-12 pt-4">
+                    
+                    <!-- Age -->
+                    <div>
+                        <label for="Age" class="block text-base font-semibold text-gray-700">Age</label>
+                        <p class="text-sm text-gray-500">Range: 18 - 100 years</p>
+                        <input type="number" name="Age" id="Age" placeholder="e.g., 54" required min="18" max="100"
+                               class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                    </div>
+                    
+                    <!-- Sex -->
+                    <div>
+                        <label for="Sex" class="block text-base font-semibold text-gray-700">Sex</label>
+                         <p class="text-sm text-gray-500">Patient's biological sex.</p>
+                        <select name="Sex" id="Sex" required class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
+
+                    <!-- ChestPainType -->
+                    <div>
+                        <label for="ChestPainType" class="block text-base font-semibold text-gray-700">Chest Pain Type</label>
+                        <p class="text-sm text-gray-500">Type of chest pain.</p>
+                        <select name="ChestPainType" id="ChestPainType" required class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                            <option value="ATA">ATA (Atypical Angina)</option>
+                            <option value="NAP">NAP (Non-Anginal Pain)</option>
+                            <option value="ASY">ASY (Asymptomatic)</option>
+                            <option value="TA">TA (Typical Angina)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- RestingBP -->
+                    <div>
+                        <label for="RestingBP" class="block text-base font-semibold text-gray-700">Resting BP</label>
+                        <p class="text-sm text-gray-500">Range: 50 - 200 mm Hg</p>
+                        <input type="number" name="RestingBP" id="RestingBP" placeholder="e.g., 140" required min="50" max="200"
+                               class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                    </div>
+                    
+                    <!-- Cholesterol -->
+                    <div>
+                        <label for="Cholesterol" class="block text-base font-semibold text-gray-700">Cholesterol</label>
+                        <p class="text-sm text-gray-500">Range: 50 - 600 mm/dl</p>
+                        <input type="number" name="Cholesterol" id="Cholesterol" placeholder="e.g., 190" required min="50" max="600"
+                               class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                    </div>
+
+                    <!-- FastingBS -->
+                    <div>
+                        <label for="FastingBS" class="block text-base font-semibold text-gray-700">Fasting Blood Sugar</label>
+                        <p class="text-sm text-gray-500">1 (> 120 mg/dl), 0 (else).</p>
+                        <select name="FastingBS" id="FastingBS" required class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                            <option value="0">0 (<= 120 mg/dl)</option>
+                            <option value="1">1 (> 120 mg/dl)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- RestingECG -->
+                    <div>
+                        <label for="RestingECG" class="block text-base font-semibold text-gray-700">Resting ECG</label>
+                        <p class="text-sm text-gray-500">Resting ECG results.</p>
+                        <select name="RestingECG" id="RestingECG" required class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                            <option value="Normal">Normal</option>
+                            <option value="ST">ST (ST-T wave abnormality)</option>
+                            <option value="LVH">LVH (Left ventricular hypertrophy)</option>
+                        </select>
+                    </div>
+
+                    <!-- MaxHR -->
+                    <div>
+                        <label for="MaxHR" class="block text-base font-semibold text-gray-700">Max Heart Rate</label>
+                        <p class="text-sm text-gray-500">Range: 60 - 220 bpm</p>
+                        <input type="number" name="MaxHR" id="MaxHR" placeholder="e.g., 172" required min="60" max="220"
+                               class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                    </div>
+
+                    <!-- ExerciseAngina -->
+                    <div>
+                        <label for="ExerciseAngina" class="block text-base font-semibold text-gray-700">Exercise Angina</label>
+                        <p class="text-sm text-gray-500">Exercise-induced angina?</p>
+                        <select name="ExerciseAngina" id="ExerciseAngina" required class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                            <option value="N">No</option>
+                            <option value="Y">Yes</option>
+                        </select>
+                    </div>
+
+                    <!-- Oldpeak -->
+                    <div>
+                        <label for="Oldpeak" class="block text-base font-semibold text-gray-700">Oldpeak</label>
+                        <p class="text-sm text-gray-500">Range: -3.0 to 7.0</p>
+                        <input type="number" step="0.1" name="Oldpeak" id="Oldpeak" placeholder="e.g., 1.5" required min="-3" max="7"
+                               class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                    </div>
+
+                    <!-- ST_Slope -->
+                    <div>
+                        <label for="ST_Slope" class="block text-base font-semibold text-gray-700">ST Slope</label>
+                        <p class="text-sm text-gray-500">Slope of the peak ST segment.</p>
+                        <select name="ST_Slope" id="ST_Slope" required class="mt-1 block w-full rounded-lg border-gray-400 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/80 p-3 text-base">
+                            <option value="Up">Up (Upsloping)</option>
+                            <option value="Flat">Flat</option>
+                            <option value="Down">Down (Downsloping)</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="md:col-span-2">
+                        <button type="submit" id="predict-button"
+                                class="w-full flex justify-center py-3 px-4 mt-6 border border-transparent rounded-lg shadow-lg text-lg font-medium text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:scale-105">
+                            <span id="button-text">Predict</span>
+                            <span id="button-loader" class="hidden">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prediction Result Modal -->
+    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <!-- Modal Content Box -->
+        <div class="modal-fade-in bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-2">Risk Assessment</h2>
+            
+            <!-- --- GAUGE METER --- -->
+            <div class="gauge-container">
+                <div class="gauge-semi-circle"></div>
+                <div id="gauge-needle" class="gauge-needle"></div>
+                <div id="gauge-center-text" class="gauge-center-text">0%</div>
+            </div>
+
+            <!-- Result Box: Category + Percentage -->
+            <div id="modal-result-box" class="mt-2 p-4 rounded-lg text-3xl font-bold">
+                <span id="modal-category-text"></span>
+            </div>
+
+            <!-- Tips Box: Shows conditional advice -->
+            <div id="modal-tips-text" class="text-left text-base text-gray-700 mt-6">
+                <!-- JavaScript will fill this -->
+            </div>
+
+            <button id="close-modal-button" class="mt-8 w-full py-3 px-4 rounded-lg shadow-lg text-lg font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // --- Page Sections ---
+        const welcomeSection = document.getElementById('welcome-section');
+        const formSection = document.getElementById('form-section');
+        const startButton = document.getElementById('start-prediction-btn');
+        const backButton = document.getElementById('back-btn');
+
+        // --- Form Elements ---
+        const form = document.getElementById('prediction-form');
+        const predictButton = document.getElementById('predict-button');
+        const buttonText = document.getElementById('button-text');
+        const buttonLoader = document.getElementById('button-loader');
+        
+        // --- Modal Elements ---
+        const modal = document.getElementById('result-modal');
+        const modalResultBox = document.getElementById('modal-result-box');
+        const modalCategoryText = document.getElementById('modal-category-text');
+        const modalTipsText = document.getElementById('modal-tips-text');
+        const closeModalButton = document.getElementById('close-modal-button');
+
+        // --- GAUGE ELEMENTS ---
+        const gaugeNeedle = document.getElementById('gauge-needle');
+        const gaugeCenterText = document.getElementById('gauge-center-text');
+
+        // --- Page Navigation ---
+        startButton.addEventListener('click', () => {
+            welcomeSection.classList.add('hidden');
+            formSection.classList.remove('hidden');
+        });
+
+        backButton.addEventListener('click', () => {
+            formSection.classList.add('hidden');
+            welcomeSection.classList.remove('hidden');
+        });
+
+        // --- Form Submission ---
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            // --- THRESHOLD VALIDATION ---
+            // While HTML5 'min'/'max' handles simple validation, 
+            // we add a check here to be safe and show a clear modal if needed.
+            const age = parseFloat(document.getElementById('Age').value);
+            const bp = parseFloat(document.getElementById('RestingBP').value);
+            const chol = parseFloat(document.getElementById('Cholesterol').value);
+            const hr = parseFloat(document.getElementById('MaxHR').value);
+            const oldpeak = parseFloat(document.getElementById('Oldpeak').value);
+
+            if (age < 18 || age > 100) return showError("Age must be between 18 and 100.");
+            if (bp < 50 || bp > 200) return showError("Resting BP must be between 50 and 200.");
+            if (chol < 50 || chol > 600) return showError("Cholesterol must be between 50 and 600.");
+            if (hr < 60 || hr > 220) return showError("Max Heart Rate must be between 60 and 220.");
+            if (oldpeak < -3 || oldpeak > 7) return showError("Oldpeak must be between -3.0 and 7.0.");
+
+            // If all good, proceed
+            buttonText.classList.add('hidden');
+            buttonLoader.classList.remove('hidden');
+            predictButton.disabled = true;
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    // Pass the risk percentage to the showResult function
+                    showResult(data.probability_failure_percent);
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                showError('An error occurred. Please check the console and server logs.');
+            } finally {
+                buttonText.classList.remove('hidden');
+                buttonLoader.classList.add('hidden');
+                predictButton.disabled = false;
+            }
+        });
+        
+        // --- MODAL LOGIC with GAUGE ---
+        function showResult(probability_percent_str) {
+            const prob = parseFloat(probability_percent_str); 
+            
+            let category_text = "";
+            let category_class = "";
+            let tips_html = "";
+
+            // --- GAUGE LOGIC ---
+            // Map 0-100% to -90 to +90 degrees for the needle
+            const rotation = (prob / 100) * 180 - 90;
+            gaugeNeedle.style.transform = `rotate(${rotation}deg)`;
+            gaugeCenterText.textContent = `${prob.toFixed(0)}%`;
+
+            // --- CATEGORY & TIPS LOGIC ---
+            if (prob < 30) {
+                category_text = `Safe (${prob.toFixed(1)}%)`;
+                category_class = 'bg-green-100 text-green-700';
+                tips_html = `
+                    <p class='font-semibold'>This is a low-risk result!</p>
+                    <p class='text-sm mt-2'>Keep up the healthy habits:</p>
+                    <ul class='list-disc list-inside text-sm mt-2 space-y-1'>
+                        <li>Maintain a balanced diet rich in fruits and vegetables.</li>
+                        <li>Stay active with regular exercise.</li>
+                        <li>Continue with regular check-ups.</li>
+                    </ul>`;
+            
+            } else if (prob >= 30 && prob < 70) {
+                category_text = `Serious (${prob.toFixed(1)}%)`;
+                category_class = 'bg-yellow-100 text-yellow-800';
+                tips_html = `
+                    <p class='font-semibold'>This result suggests a moderate risk.</p>
+                    <p class='text-sm mt-2'>It's a good time to be proactive about your health:</p>
+                    <ul class='list-disc list-inside text-sm mt-2 space-y-1'>
+                        <li>Consult a doctor to discuss these risk factors.</li>
+                        <li>Monitor your blood pressure and cholesterol levels.</li>
+                        <li>Focus on a heart-healthy diet and reduce sodium intake.</li>
+                    </ul>`;
+            
+            } else { // 70% and above
+                category_text = `Critical (${prob.toFixed(1)}%)`;
+                category_class = 'bg-red-100 text-red-700';
+                tips_html = `
+                    <p class='font-semibold'>This result indicates a high risk.</p>
+                    <p class='text-sm mt-2'><b>Please take this seriously and consult a healthcare professional soon.</b></p>
+                    <ul class='list-disc list-inside text-sm mt-2 space-y-1'>
+                        <li>Schedule an appointment with your doctor or a cardiologist.</li>
+                        <li>Discuss this result and your specific health factors.</li>
+                        <li>Avoid strenuous activity until you've spoken to a doctor.</li>
+                    </ul>`;
+            }
+            
+            modalCategoryText.textContent = category_text;
+            modalResultBox.className = `mt-2 p-4 rounded-lg text-3xl font-bold ${category_class}`;
+            modalTipsText.innerHTML = tips_html;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function showError(message) {
+            // Reset gauge for errors
+            gaugeNeedle.style.transform = 'rotate(-90deg)';
+            gaugeCenterText.textContent = 'Error';
+            
+            modalCategoryText.textContent = `Error ⚠️`;
+            modalResultBox.className = 'mt-2 p-4 rounded-lg text-xl font-bold bg-gray-100 text-gray-800';
+            modalTipsText.innerHTML = `<p class='text-center'>${message}<br>Please check your inputs and try again.</p>`;
+            
+            modal.classList.remove('hidden');
+        }
+
+        // --- Modal Close Listeners ---
+        closeModalButton.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
