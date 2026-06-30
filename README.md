@@ -19,14 +19,14 @@ This project trains a classification model on the [Heart Failure Prediction Data
 ## Project Structure
 
 ```
-├── app.py                                   # Flask backend serving the model
-├── Model_Training.py                        # Script to train and save the model
+├── app.py                                    # Flask backend serving the model
+├── Model_Training.py                         # Script to train and save the model
 ├── index.html                                # Frontend UI
 ├── heart.csv                                 # Dataset (download separately, see below)
 ├── heart_failure_model.joblib                # Trained model (generated)
-├── heart_failure_scaler.joblib                # Fitted scaler (generated)
+├── heart_failure_scaler.joblib               # Fitted scaler (generated)
 ├── heart_failure_original_features.joblib    # Original feature names (generated)
-├── heart_failure_encoded_features.joblib      # One-hot encoded feature names (generated)
+├── heart_failure_encoded_features.joblib     # One-hot encoded feature names (generated)
 └── requirements.txt                          # Python dependencies
 ```
 
